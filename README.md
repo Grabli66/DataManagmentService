@@ -1,2 +1,2 @@
-# DataManagmentService
-Data managment service
+# Data Managment Service
+
