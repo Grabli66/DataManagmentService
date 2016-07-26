@@ -1,0 +1,3 @@
+[Compact]
+class StringHelper {
+}

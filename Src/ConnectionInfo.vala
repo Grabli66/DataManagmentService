@@ -2,7 +2,33 @@
 *   Парсит строку подключения 
 *   для того что бы использовать эту информацию при осуществлении подключения к источнику данных
 */
-class ConnectionInfo : Object { 
-    public ConnectionInfo(string connectionString) {        
+class ConnectionInfo : Object {
+    public const string DRIVER_NAME = "Driver";
+    public const string SOURCE_NAME = "Source";
+
+    /*
+    *   Драйвер: sqlite, postgresql, mysql, xml
+    */
+    public string Driver { get; private set; default = ""; }
+    public string Source { get; private set; default = ""; }
+
+    public ConnectionInfo(string connectionString) 
+    {
+        if (connectionString == "") throw new ParseError.NO_DATA ("No data");
+
+        string[] stringItems = connectionString.split (" ");
+        foreach (var stringItem in stringItems) {
+            var kvData = stringItem.split ("=");
+            if (kvData.length < 2) throw new ParseError.WRONG_DATA ("Wrong data");
+            var key = kvData[0];
+            var val = kvData[1];
+            ProcessKeyValue (key, val);
+        }
+    }
+
+    private void ProcessKeyValue (string key, string val) {
+        if ((key == "") || (val == "")) throw new ParseError.WRONG_DATA ("Wrong data");
+        if (key == DRIVER_NAME) Driver = val;
+        if (key == SOURCE_NAME) Source = val;
     }
 }
