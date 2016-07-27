@@ -7,10 +7,33 @@ class ManagerFactory {
     private DSManagerFactory() {}
 
     /*
-    *   Возвращает менеджер согласно переданной строке подключения    
-    *   Пример: "Driver=sqlite Source=database.db"
+    *   Экземпляр менеджера
     */
-    public static IEntityManager GetManager (string connectionString) {
-        
+    private IEntityManager _instance;
+
+    /*
+    *   Создает новый менеджер согласно настройкам
+    */
+    private static IEntityManager CreateManager () {
+        var config = Configuration.GetInstance ();
+        var connectionString = config.Get (Configuration.CONNECTION_STRING);
+        var info = ConnectionInfo (connectionString);
+
+        if (info.Driver == DriverType.SQLITE) {
+            return new SqliteEntityManager (info);
+        }
+
+        throw new CommonError.NOT_FOUND ("Driver not found");
+    }
+
+    /*
+    *   Возвращает менеджер согласно настройкам
+    */
+    public static IEntityManager GetManager () {
+        if (_instance == null) {
+            _instance = CreateManager ();
+        }
+
+        return _instance;
     }    
 }

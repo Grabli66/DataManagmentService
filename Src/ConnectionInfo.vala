@@ -1,4 +1,23 @@
 /*
+*   Тип драйвера
+*/
+public enum DriverType {
+    SQLITE;
+
+    /*
+    *   Название драйвера для SQLITE
+    */
+    public const string SQLITE_DRIVER = "sqlite";
+
+    /*
+    *   Преобразует строку в DriverType
+    */
+    public static DriverType FromString (string s) {
+        if (s == SQLITE_DRIVER) return SQLITE;
+    }
+}
+
+/*
 *   Парсит строку подключения 
 *   для того что бы использовать эту информацию при осуществлении подключения к источнику данных
 */
@@ -9,9 +28,12 @@ class ConnectionInfo : Object {
     /*
     *   Драйвер: sqlite, postgresql, mysql, xml
     */
-    public string Driver { get; private set; default = ""; }
+    public DriverType Driver { get; private set; default = ""; }
     public string Source { get; private set; default = ""; }
 
+    /*
+    *   Парсит строку подключения
+    */
     public ConnectionInfo(string connectionString) 
     {
         if (connectionString == "") throw new ParseError.NO_DATA ("No data");
@@ -26,9 +48,12 @@ class ConnectionInfo : Object {
         }
     }
 
+    /*
+    *   Заполняет подключение информацией
+    */
     private void ProcessKeyValue (string key, string val) {
         if ((key == "") || (val == "")) throw new ParseError.WRONG_DATA ("Wrong data");
-        if (key == DRIVER_NAME) Driver = val;
+        if (key == DRIVER_NAME) Driver = DriverType.FromString (val);
         if (key == SOURCE_NAME) Source = val;
     }
 }
