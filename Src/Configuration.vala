@@ -1,3 +1,6 @@
+/*
+*   Конфигурация приложения
+*/
 class Configuration : Object {
     /*
     *   Экземпляр Configuration
@@ -5,30 +8,31 @@ class Configuration : Object {
     private static Configuration _instance;
 
     /*
-    *   Словарь с настройками
+    *   Настройки в виде Json объекта
     */
-    private Gee.HashMap<string, string> _settings = new Gee.HashMap<string, string>();
+    private Json.Node _settings;
 
+    /*
+    *   Загружает файл настроек
+    */
     private Configuration() {
-        // Загружает файл настроек
-        // Парсит настройки
+        Json.Parser parser = new Json.Parser ();
+        parser.load_from_file ("Settings.json");        
+        _settings = parser.get_root ();
     }
 
     /*
-    *   Возвращает экземпляр Configuration
+    *   Загружает настройки
     */
-    private static Configuration GetInstance () {
-        if (_instance == null) {
-            _instance = new Configuration();
-        }
-
-        return _instance;
-    }
+    public static void Init () {
+        _instance = new Configuration();
+    }    
 
     /*
-    *   Возвращает значение настроек по ключу
+    *   Ищет элемент в настройках по названию
+    *   Если parent == null то ищет начиная с корневого элемента
     */
-    public string Get (string key) {
-        return _settings.@get (key);
+    public static Json.Node FindNode (string name, Json.Node parent = null) {
+        return null;
     }
 }

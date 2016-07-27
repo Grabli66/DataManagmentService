@@ -1,0 +1,12 @@
+//  Пример конфигурации сервиса
+{
+    "ConnectionString" : {
+        "Driver" : "sqlite",
+        "Source" : "database.db"
+    },
+    "Binding" : {
+        "Protocol" : "http",
+        "Host" : "localhost",
+        "Port" : 3362
+    }
+}  

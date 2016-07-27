@@ -15,9 +15,8 @@ class ManagerFactory {
     *   Создает новый менеджер согласно настройкам
     */
     private static IEntityManager CreateManager () {
-        var config = Configuration.GetInstance ();
-        var connectionString = config.Get (Configuration.CONNECTION_STRING);
-        var info = ConnectionInfo (connectionString);
+        var connectionNode = Configuration.FindNode (Configuration.CONNECTION_STRING);
+        var info = ConnectionInfo (connectionNode);
 
         if (info.Driver == DriverType.SQLITE) {
             return new SqliteEntityManager (info);
