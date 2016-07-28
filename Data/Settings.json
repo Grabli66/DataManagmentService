@@ -1,6 +1,5 @@
-//  Пример конфигурации сервиса
 {
-    "ConnectionString" : {
+    "ConnectionInfo" : {
         "Driver" : "sqlite",
         "Source" : "database.db"
     },

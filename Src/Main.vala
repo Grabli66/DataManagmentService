@@ -1,7 +1,7 @@
 void main () {
     try {
         // Загружает конфигурацию сервиса
-        Configuration.Init ();
+        Configuration.Load ();
         // Стартует сервис
         var service = new Service ();
         service.Start ();
