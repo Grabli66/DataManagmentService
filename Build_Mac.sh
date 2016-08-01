@@ -15,7 +15,9 @@ valac -C ../../Src/Configuration/ConnectionInfo.vala \
          ../TestConfiguration.vala \
          ../TestLogger.vala \
          ../Main.vala \
-         --pkg json-glib-1.0
+         --pkg json-glib-1.0 \
+         --pkg gee-0.8 \
+         --pkg gio-2.0
 
 gcc Main.c \
     ConnectionInfo.c \
@@ -30,9 +32,12 @@ gcc Main.c \
     -I/usr/local/lib/glib-2.0/include \
     -I/usr/local/include/json-glib-1.0 \
     -I/usr/local/lib/glib-2.0/include \
+    -I/usr/local/include/gee-0.8 \
     -lglib-2.0 \
     -lgobject-2.0 \
     -ljson-glib-1.0 \
+    -lgee-0.8 \
+    -lgio-2.0 \
     -O2 \
     -o Main
 
