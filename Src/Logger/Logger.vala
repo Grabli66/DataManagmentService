@@ -8,6 +8,19 @@ public enum LogLevel {
 }
 
 /*
+*   Элемент списка с именами файлов лога
+*/
+public class NameItem {
+    public string Name;
+    public int Index;
+
+    public NameItem (string name, int index) {
+        Name = name;
+        Index = index;
+    }
+}
+
+/*
 *   Запись в журнале лога
 */
 public class LogRecord {
@@ -38,6 +51,14 @@ public class LogRecord {
 *   Занимается логированием
 */
 public class Logger : Object {
+    /*
+    *   Название log файла
+    */
+    public const string LOG_NAME = "Log";
+
+    /*
+    *   Разделитель файлов
+    */
     public const string DIR_SEPARATOR = "/";
 
     /*
@@ -48,22 +69,22 @@ public class Logger : Object {
     /*
     *   Пауза между записью в файл
     */
-    public const int THREAD_SLEEP = 100;
+    public const int THREAD_SLEEP = 10;
 
     /*
-    *   Максимальное количество строк в файле
+    *   Максимальный размер файла
     */
-    public static int MaxLineCount = 1000;
+    public static int MaxFileSize = 100000;
 
     /*
     *   Максимальное количество файлов
     */
-    public static int MaxFileCount = 10;
+    public static int MaxFileCount = 5;
 
     /*
     *   Cписок со всеми журналами
     */
-    private static Gee.ConcurrentList<Logger> _loggerList = new Gee.ConcurrentList<Logger> ();
+    private static Gee.HashMap<string, Logger> _loggerMap;
 
     /*
     *   Поток который пишет лог в файл
@@ -76,19 +97,9 @@ public class Logger : Object {
     public Gee.ConcurrentList<LogRecord> LogList = new Gee.ConcurrentList<LogRecord> ();
 
     /*
-    *   Индекс текущей строки
-    */
-    public int CurrentLineIndex = 0;
-
-    /*
-    *   Индекс текущего файла
-    */
-    public int CurrentFileIndex = 0;
-
-    /*
     *   Путь в котором находятся файлы
     */
-    public string Path;
+    public string PathName;
 
     /*
     *   Уровень логирования   
@@ -106,11 +117,71 @@ public class Logger : Object {
     *   Создает журнал
     */
     private Logger(string path) {
-        var pathname = Path.build_path (DIR_SEPARATOR, LOG_DIR, path);
-        var file = File.new_for_commandline_arg (pathname);
+        PathName = Path.build_path (DIR_SEPARATOR, LOG_DIR, path);
+    }
+
+    /*
+    *   Двигает журналы
+    */
+    private void MoveFiles () {
+        var dir = File.new_for_path (PathName);
+        var enumerator = dir.enumerate_children (FileAttribute.STANDARD_NAME, 0);
+
+        var nameList = new Gee.ArrayList<NameItem> ();
+        FileInfo file_info;
+        while ((file_info = enumerator.next_file ()) != null) {
+            var name = file_info.get_name ();
+            var nameStrs = name.split (".");
+            if (nameStrs.length < 2) continue;
+            if (nameStrs[0] != LOG_NAME) continue;
+            var index = -1;
+            if (nameStrs.length > 2) index = int.parse (nameStrs[1]);
+            var nameItem = new NameItem (name, index);
+            nameList.add (nameItem);
+        }
+
+        nameList.sort ((a, b) => {
+            return b.Index - a.Index;
+        });
+
+        foreach (var item in nameList) {
+            var nindex = item.Index + 1;
+            var filePath = Path.build_path (DIR_SEPARATOR, PathName, item.Name);
+            var file = File.new_for_path (filePath);
+            if (nindex > MaxFileCount) {
+                file.delete ();
+            } else {
+                var nname = LOG_NAME + "." + nindex.to_string () + ".log";
+                file.set_display_name (nname);
+            }
+        }
+    }
+
+    /*
+    *   Подготавливает файл и возвращает поток для вывода
+    */
+    public DataOutputStream OpenStream () {
+        // Создает все необходимые директории
+        var file = File.new_for_path (PathName);
         if (!file.query_exists ()) {
             file.make_directory_with_parents ();
         }
+
+        var fileName = LOG_NAME + ".log";
+        var filePath = Path.build_path (DIR_SEPARATOR, PathName, fileName);
+        file = File.new_for_path (filePath);
+        if (file.query_exists ()) {
+            var fileInfo = file.query_info ("*", FileQueryInfoFlags.NONE);
+            var fileSize = fileInfo.get_size ();
+            if (fileSize > MaxFileSize) {
+                MoveFiles ();
+            }
+        }
+
+        file = File.new_for_path (filePath);
+        var fstr = file.append_to (FileCreateFlags.NONE);
+        var data_stream = new DataOutputStream (fstr);
+        return data_stream;
     }
 
     /*
@@ -118,16 +189,16 @@ public class Logger : Object {
     */
     private static int WriteLog () {
         while (true) {
-            foreach (var logger in _loggerList) {
-                var file = 
+            foreach (var logger in _loggerMap.values) {
+                if (logger.LogList.size < 1) continue;
+                var data_stream = logger.OpenStream ();
 
                 for (int i = 0; i < logger.LogList.size; i++) {
                     var logRecord = logger.LogList[0];
-                    var msg = logRecord.Time.format ("%d.%m.%Y %H:%M:%S") + " " + logRecord.Message;
-                    stderr.printf (msg);
-                    stderr.printf ("\n");
+                    var msg = logRecord.Time.format ("%d.%m.%Y %H:%M:%S") + " " + logRecord.Message + "\n";
+                    data_stream.put_string (msg);
                     logger.LogList.remove_at (0);
-                }   
+                }
             }
 
             Thread.usleep (THREAD_SLEEP);
@@ -139,8 +210,12 @@ public class Logger : Object {
     *   Подготавливает путь журнала и возвращает его
     */
     public static Logger GetLogger (string path = "") {
+        // Не хочет создавать через construct
+        if (_loggerMap == null) _loggerMap = new Gee.HashMap<string, Logger> ();
+        if (_loggerMap.has_key (path)) return _loggerMap[path];
+
         var logger = new Logger (path);
-        _loggerList.add (logger);
+        _loggerMap[path] = logger;
         return logger;
     }
 
