@@ -201,17 +201,14 @@ public class Logger : Object {
                     logger.LogList.clear ();
                 }
 
-                //var size = logger.LogList.size;
                 if (size < 1) continue;
                 var data_stream = logger.OpenStream ();
 
                 for (int i = 0; i < size; i++) {
-                    //var logRecord = logger.LogList[0];
                     var logRecord = data[i];
                     var micro = "." + logRecord.Time.get_microsecond ().to_string ();
                     var msg = logRecord.Time.format ("%d.%m.%Y %H:%M:%S") + micro + " " + logRecord.Message + "\n";
                     data_stream.put_string (msg);
-                    //logger.LogList.remove_at (0);
                 }
             }
             _loggerThread.usleep (THREAD_SLEEP);
