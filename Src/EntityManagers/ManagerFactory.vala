@@ -15,11 +15,10 @@ class ManagerFactory {
     *   Создает новый менеджер согласно настройкам
     */
     private static IEntityManager CreateManager () {
-        var connectionNode = Configuration.FindNode (Configuration.CONNECTION_STRING);
-        var info = ConnectionInfo (connectionNode);
+        var connectionInfo = Configuration.GetInctance ().Connection ();
 
         if (info.Driver == DriverType.SQLITE) {
-            return new SqliteEntityManager (info);
+            return new SqliteEntityManager (connectionInfo);
         }
 
         throw new CommonError.NOT_FOUND ("Driver not found");

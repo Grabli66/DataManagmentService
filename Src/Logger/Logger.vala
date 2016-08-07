@@ -69,7 +69,17 @@ public class Logger : Object {
     /*
     *   Пауза между записью в файл
     */
-    public const int THREAD_SLEEP = 10;
+    public const int THREAD_SLEEP = 1000;
+
+    /*
+    *   Cписок со всеми журналами
+    */
+    private static Gee.HashMap<string, Logger> _loggerMap;
+
+    /*
+    *   Поток который пишет лог в файл
+    */
+    private static Thread<void*> _loggerThread;
 
     /*
     *   Максимальный размер файла
@@ -82,19 +92,9 @@ public class Logger : Object {
     public static int MaxFileCount = 5;
 
     /*
-    *   Cписок со всеми журналами
-    */
-    private static Gee.HashMap<string, Logger> _loggerMap;
-
-    /*
-    *   Поток который пишет лог в файл
-    */
-    private static Thread<int> _loggerThread;
-
-    /*
     *   Cписок сообщениями в журнал
     */
-    public Gee.ConcurrentList<LogRecord> LogList = new Gee.ConcurrentList<LogRecord> ();
+    public Gee.ArrayList<LogRecord> LogList = new Gee.ArrayList<LogRecord> ();
 
     /*
     *   Путь в котором находятся файлы
@@ -105,12 +105,12 @@ public class Logger : Object {
     *   Уровень логирования   
     */
     public LogLevel Level = LogLevel.FATAL;
-
+    
     /*
     *   Создает поток который пишет лог
     */
     static construct {
-        _loggerThread = new Thread<int> ("Logger", Logger.WriteLog);
+        _loggerThread = new Thread<void*> ("Logger", Logger.WriteLog);
     }
 
     /*
@@ -170,6 +170,7 @@ public class Logger : Object {
         var fileName = LOG_NAME + ".log";
         var filePath = Path.build_path (DIR_SEPARATOR, PathName, fileName);
         file = File.new_for_path (filePath);
+        // TODO: сделать проверку размера файла
         if (file.query_exists ()) {
             var fileInfo = file.query_info ("*", FileQueryInfoFlags.NONE);
             var fileSize = fileInfo.get_size ();
@@ -187,23 +188,34 @@ public class Logger : Object {
     /*
     *   Берет записи из журнала и пишет в файл
     */
-    private static int WriteLog () {
+    private static void* WriteLog () {
         while (true) {
             foreach (var logger in _loggerMap.values) {
-                if (logger.LogList.size < 1) continue;
+                // Вычисление размера списка очень медленное
+
+                LogRecord[] data;
+                int size = 0;
+                lock (logger.LogList) {
+                    data = logger.LogList.to_array ();
+                    size = data.length;
+                    logger.LogList.clear ();
+                }
+
+                //var size = logger.LogList.size;
+                if (size < 1) continue;
                 var data_stream = logger.OpenStream ();
 
-                for (int i = 0; i < logger.LogList.size; i++) {
-                    var logRecord = logger.LogList[0];
-                    var msg = logRecord.Time.format ("%d.%m.%Y %H:%M:%S") + " " + logRecord.Message + "\n";
+                for (int i = 0; i < size; i++) {
+                    //var logRecord = logger.LogList[0];
+                    var logRecord = data[i];
+                    var micro = "." + logRecord.Time.get_microsecond ().to_string ();
+                    var msg = logRecord.Time.format ("%d.%m.%Y %H:%M:%S") + micro + " " + logRecord.Message + "\n";
                     data_stream.put_string (msg);
-                    logger.LogList.remove_at (0);
+                    //logger.LogList.remove_at (0);
                 }
             }
-
-            Thread.usleep (THREAD_SLEEP);
+            _loggerThread.usleep (THREAD_SLEEP);
         }
-        return 0;
     }
 
     /*
@@ -225,6 +237,8 @@ public class Logger : Object {
     public void AddLine (string s, LogLevel level = LogLevel.FATAL) {
         if (level > Level) return;
         // Добавляет в список запись журнала
-        LogList.add (new LogRecord (this, new DateTime.now_local (), s));
+        lock (LogList) {
+            LogList.add (new LogRecord (this, new DateTime.now_local (), s));
+        }
     }
 }

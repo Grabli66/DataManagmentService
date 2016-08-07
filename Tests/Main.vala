@@ -1,9 +1,6 @@
 namespace Tests {
     public void main () {
-        //TestConfiguration ();
+        TestConfiguration ();
         TestLogger ();
-
-        var mainLoop = new MainLoop ();
-        mainLoop.run ();
     }
 }
