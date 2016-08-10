@@ -50,7 +50,7 @@ public class LogRecord {
 /*
 *   Занимается логированием
 */
-public class Logger : Object {
+public class Logger {
     /*
     *   Название log файла
     */
@@ -235,7 +235,10 @@ public class Logger : Object {
         if (level > Level) return;
         // Добавляет в список запись журнала
         lock (LogList) {
-            LogList.add (new LogRecord (this, new DateTime.now_local (), s));
+            // Получение текущего времени медленное если использовать now_local
+            // Поэтому запоминается временная зона и используется now с передачей зоны
+            var tz = Configuration.GetInstance ().LocalTimeZone;
+            LogList.add (new LogRecord (this, new DateTime.now (tz), s));
         }
     }
 }

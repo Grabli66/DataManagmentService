@@ -10,7 +10,8 @@ public errordomain ParseError {
 *   Ошибки возникающие при работе с базой данных
 */
 public errordomain DatabaseError {
-    CANT_OPEN;
+    CANT_OPEN,
+    SQL_ERROR;
 }
 
 /*

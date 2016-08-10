@@ -1,6 +1,7 @@
 namespace Tests {
     public void main () {
-        TestConfiguration ();
-        TestLogger ();
+        //TestConfiguration ();
+        //TestLogger ();
+        TestSqliteEntityManager ();
     }
 }

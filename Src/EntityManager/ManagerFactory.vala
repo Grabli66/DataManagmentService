@@ -4,20 +4,20 @@
 */
 [Compact]
 class ManagerFactory {
-    private DSManagerFactory() {}
+    private ManagerFactory() {}
 
     /*
     *   Экземпляр менеджера
     */
-    private IEntityManager _instance;
+    private static IEntityManager _instance;
 
     /*
     *   Создает новый менеджер согласно настройкам
     */
     private static IEntityManager CreateManager () {
-        var connectionInfo = Configuration.GetInctance ().Connection ();
+        var connectionInfo = Configuration.GetInstance ().Connection;
 
-        if (info.Driver == DriverType.SQLITE) {
+        if (connectionInfo.Driver == DriverType.SQLITE) {
             return new SqliteEntityManager (connectionInfo);
         }
 

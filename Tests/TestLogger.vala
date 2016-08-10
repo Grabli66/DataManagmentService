@@ -1,8 +1,9 @@
 namespace Tests {
     void TestLogger () {
+        Configuration.Load ();
         var logger = Logger.GetLogger ("Test/Good");
 
-        for (int i = 0; i < 2000; i++) {
+        for (int i = 0; i < 20000; i++) {
             logger.AddLine (i.to_string ());  
         }
 
